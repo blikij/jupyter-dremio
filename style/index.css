@@ -226,6 +226,14 @@
   font-size: 0.9em;
 }
 
+.dremio-search-diag {
+  margin-top: 4px;
+  font-size: 0.82em;
+  color: var(--jp-warn-color0, #e65100);
+  font-style: normal;
+  word-break: break-all;
+}
+
 .dremio-search-spinner {
   flex-shrink: 0;
   font-size: 0.85em;

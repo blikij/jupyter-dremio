@@ -39,6 +39,7 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
   const [searchResults, setSearchResults] = useState<CatalogItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchDiag, setSearchDiag] = useState<string | null>(null);
   const [searchExpanded, setSearchExpanded] = useState(true);
 
   useEffect(() => {
@@ -72,8 +73,20 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
       .then(data => {
         setSearchResults(data.data ?? []);
         setSearchExpanded(true);
+        if ((data.data ?? []).length === 0) {
+          setSearchDiag(
+            data._rawKeys
+              ? `API returned 0 matches. Response keys: ${data._rawKeys}`
+              : 'API returned an empty response.'
+          );
+        } else {
+          setSearchDiag(null);
+        }
       })
-      .catch(e => setSearchError(e instanceof Error ? e.message : String(e)))
+      .catch(e => {
+        setSearchError(e instanceof Error ? e.message : String(e));
+        setSearchDiag(null);
+      })
       .finally(() => setSearchLoading(false));
   }, [creds, activeQuery]);
 
@@ -128,6 +141,8 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
     setSearchQuery('');
     setActiveQuery('');
     setSearchResults([]);
+    setSearchError(null);
+    setSearchDiag(null);
   };
 
   const handleRefreshRoot = useCallback(() => {
@@ -174,6 +189,7 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
     setActiveQuery('');
     setSearchResults([]);
     setSearchError(null);
+    setSearchDiag(null);
   };
 
   if (mode === 'detecting') {
@@ -252,12 +268,15 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
               <div className="dremio-node-children">
                 {searchError && (
                   <div className="dremio-node-error" style={{ paddingLeft: '24px' }}>
-                    {searchError}
+                    Search error: {searchError}
                   </div>
                 )}
                 {!searchLoading && !searchError && searchResults.length === 0 && (
                   <div className="dremio-node-empty" style={{ paddingLeft: '24px' }}>
-                    No results for "{activeQuery}".
+                    No results for &ldquo;{activeQuery}&rdquo;.
+                    {searchDiag && (
+                      <div className="dremio-search-diag">{searchDiag}</div>
+                    )}
                   </div>
                 )}
                 {searchResults.map(item => (

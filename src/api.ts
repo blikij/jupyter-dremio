@@ -365,46 +365,56 @@ export async function promoteToParquet(
 // Search — POST /api/v3/search
 // ---------------------------------------------------------------------------
 
-interface SearchResultEntity {
+// Per Dremio docs: each result has a "category" and a "catalogObject" sub-object.
+interface SearchCatalogObject {
   id?: string;
-  entityType?: string;
-  type?: string;
-  containerType?: string;
-  datasetType?: string;
   path?: string[];
   tag?: string;
   [key: string]: unknown;
 }
 
-interface SearchHit {
-  entity?: SearchResultEntity;
-  // Some Dremio versions wrap the fields directly at the top level
-  id?: string;
-  path?: string[];
-  entityType?: string;
-  type?: string;
-  containerType?: string;
-  datasetType?: string;
+interface SearchResult {
+  category?: string;            // TABLE | VIEW | FOLDER | SPACE | SOURCE | …
+  catalogObject?: SearchCatalogObject;
 }
 
-interface DremioSearchResponse {
-  results?: SearchHit[];
-  nextPageToken?: string;
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DremioSearchResponse = Record<string, any>;
 
-function normaliseSearchHit(hit: SearchHit): CatalogItem | null {
-  // Dremio may wrap the entity in an "entity" sub-object, or put fields at top level.
-  const e: SearchResultEntity = hit.entity ?? (hit as unknown as SearchResultEntity);
-  const path = e.path ?? [];
+function normaliseSearchResult(result: SearchResult): CatalogItem | null {
+  const obj = result.catalogObject;
+  if (!obj) return null;                    // job / script / reflection — skip
+  const path: string[] = (obj.path as string[] | undefined) ?? [];
   if (!path.length) return null;
+
+  // Map the "category" string to the type fields the rest of the UI expects
+  let entityType: CatalogEntityType | undefined;
+  let containerType: ContainerSubType | undefined;
+  let datasetType: DatasetSubType | undefined;
+
+  switch (result.category) {
+    case 'TABLE':
+      entityType = 'DATASET'; datasetType = 'PHYSICAL_DATASET'; break;
+    case 'VIEW':
+      entityType = 'DATASET'; datasetType = 'VIRTUAL_DATASET'; break;
+    case 'FOLDER':
+      entityType = 'CONTAINER'; containerType = 'FOLDER'; break;
+    case 'SPACE':
+      entityType = 'CONTAINER'; containerType = 'SPACE'; break;
+    case 'SOURCE':
+      entityType = 'CONTAINER'; containerType = 'SOURCE'; break;
+    default:
+      entityType = 'CONTAINER';
+  }
+
   return {
-    id: e.id ?? path.join('/'),
+    id: (obj.id as string | undefined) ?? path.join('/'),
     path,
-    entityType: e.entityType as CatalogEntityType | undefined,
-    type: e.type as CatalogEntityType | undefined,
-    containerType: e.containerType as ContainerSubType | undefined,
-    datasetType: e.datasetType as DatasetSubType | undefined,
-    tag: e.tag,
+    entityType,
+    type: entityType,
+    containerType,
+    datasetType,
+    tag: obj.tag as string | undefined,
   };
 }
 
@@ -412,25 +422,28 @@ export async function fetchCatalogSearch(
   creds: DremioCredentials,
   q: string,
   maxResults = 50
-): Promise<CatalogRoot> {
-  const body = JSON.stringify({ query: q, pageToken: '', maxResults });
+): Promise<CatalogRoot & { _rawKeys?: string }> {
   let raw: DremioSearchResponse;
   if (creds.direct) {
     raw = await directRequest(`${creds.url}/api/v3/search`, {
       method: 'POST',
       headers: { ...directAuthHeader(creds.token), 'Content-Type': 'application/json' },
-      body,
+      body: JSON.stringify({
+        query: q,
+        filter: 'category in ["TABLE", "VIEW", "FOLDER", "SPACE", "SOURCE"]',
+        pageToken: '',
+        maxResults,
+      }),
     });
   } else {
-    raw = await proxyRequest(`dremio/catalog/search?q=${encodeURIComponent(q)}&maxResults=${maxResults}`, {
-      method: 'GET',
-      headers: proxyHeaders(creds),
-    });
+    raw = await proxyRequest(
+      `dremio/catalog/search?q=${encodeURIComponent(q)}&maxResults=${maxResults}`,
+      { method: 'GET', headers: proxyHeaders(creds) }
+    );
   }
-  const items = (raw.results ?? [])
-    .map(normaliseSearchHit)
-    .filter((x): x is CatalogItem => x !== null);
-  return { data: items };
+  const hits: SearchResult[] = raw.results ?? [];
+  const items = hits.map(normaliseSearchResult).filter((x): x is CatalogItem => x !== null);
+  return { data: items, _rawKeys: Object.keys(raw).join(', ') };
 }
 
 // ---------------------------------------------------------------------------

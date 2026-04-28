@@ -224,17 +224,28 @@ class SearchHandler(APIHandler):
         token = _dremio_token(self)
         q = self.get_argument("q", "")
         max_results = int(self.get_argument("maxResults", "50"))
-        # POST /api/v3/search — the proper Dremio full-text catalog search endpoint.
-        # No category filter so tables, views, folders, and spaces all come back.
         resp = requests.post(
             f"{dremio_url}/api/v3/search",
-            json={"query": q, "pageToken": "", "maxResults": max_results},
+            json={
+                "query": q,
+                "filter": 'category in ["TABLE", "VIEW", "FOLDER", "SPACE", "SOURCE"]',
+                "pageToken": "",
+                "maxResults": max_results,
+            },
             headers={**_auth_header(token), "Content-Type": "application/json"},
             timeout=30,
         )
         if not resp.ok:
             raise web.HTTPError(resp.status_code, resp.text)
-        self.finish(resp.json())
+        data = resp.json()
+        # Log top-level keys so we can see the actual response shape in Jupyter logs
+        self.log.info(
+            "Dremio search q=%r status=%s top-level keys=%s",
+            q,
+            resp.status_code,
+            list(data.keys()) if isinstance(data, dict) else repr(type(data)),
+        )
+        self.finish(data)
 
 
 class FolderHandler(APIHandler):
