@@ -113,60 +113,31 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
       let code: string;
 
-      if (creds.username && creds.password) {
-        // Regular login — password is injected into the kernel silently (see below),
-        // so the notebook cell reads it from os.environ without storing it on disk.
-        code =
-          `from adbc_driver_flightsql import dbapi\n` +
-          `import os, pandas as pd\n` +
-          `\n` +
-          `# Logged in as: ${creds.username}\n` +
-          `# Password was injected into this kernel's environment at notebook creation.\n` +
-          `dremio_conn = dbapi.connect(\n` +
-          `    "${flightUrl}",\n` +
-          `    db_kwargs={\n` +
-          `        "username": "${esc(creds.username)}",\n` +
-          `        "password": os.environ.get("_DREMIO_PWD", ""),\n` +
-          `        "adbc.flight.sql.rpc.with_cookie_middleware": "true",\n` +
-          `    },\n` +
-          `)\n` +
-          `\n` +
-          `%load_ext sql\n` +
-          `%sql dremio_conn --alias dremio\n` +
-          `\n` +
-          `%config SqlMagic.displaylimit = 50\n` +
-          `%config SqlMagic.autopandas = True\n` +
-          `\n` +
-          `# Use %%sql at the top of a cell to write SQL directly`;
-      } else {
-        // SSO login (no password stored): pre-fill username, prompt for password.
-        const usernameLine = creds.username
-          ? `_username = "${esc(creds.username)}"\n`
-          : `_username = input("Dremio username: ")\n`;
-        code =
-          `from adbc_driver_flightsql import dbapi\n` +
-          `import os, pandas as pd, getpass\n` +
-          `\n` +
-          usernameLine +
-          `_password = os.environ.get("_DREMIO_PWD") or getpass.getpass(f"Dremio password for {_username}: ")\n` +
-          `\n` +
-          `dremio_conn = dbapi.connect(\n` +
-          `    "${flightUrl}",\n` +
-          `    db_kwargs={\n` +
-          `        "username": _username,\n` +
-          `        "password": _password,\n` +
-          `        "adbc.flight.sql.rpc.with_cookie_middleware": "true",\n` +
-          `    },\n` +
-          `)\n` +
-          `\n` +
-          `%load_ext sql\n` +
-          `%sql dremio_conn --alias dremio\n` +
-          `\n` +
-          `%config SqlMagic.displaylimit = 50\n` +
-          `%config SqlMagic.autopandas = True\n` +
-          `\n` +
-          `# Use %%sql at the top of a cell to write SQL directly`;
-      }
+      // Both username and password are injected silently into the kernel (see below).
+      // The notebook cell reads them from os.environ so nothing sensitive is stored
+      // on disk — the same .ipynb can be shared with any user unchanged.
+      code =
+        `from adbc_driver_flightsql import dbapi\n` +
+        `import os, pandas as pd\n` +
+        `\n` +
+        `# Credentials were injected into this kernel at notebook creation.\n` +
+        `# Re-open via the Dremio sidebar button if the kernel restarts.\n` +
+        `dremio_conn = dbapi.connect(\n` +
+        `    "${flightUrl}",\n` +
+        `    db_kwargs={\n` +
+        `        "username": os.environ.get("_DREMIO_USER", ""),\n` +
+        `        "password": os.environ.get("_DREMIO_PWD", ""),\n` +
+        `        "adbc.flight.sql.rpc.with_cookie_middleware": "true",\n` +
+        `    },\n` +
+        `)\n` +
+        `\n` +
+        `%load_ext sql\n` +
+        `%sql dremio_conn --alias dremio\n` +
+        `\n` +
+        `%config SqlMagic.displaylimit = 50\n` +
+        `%config SqlMagic.autopandas = True\n` +
+        `\n` +
+        `# Use %%sql at the top of a cell to write SQL directly`;
 
       await app.commands.execute('notebook:create-new', { kernelName: 'python3' });
 
@@ -226,18 +197,19 @@ const plugin: JupyterFrontEndPlugin<void> = {
         metadata: {},
       });
 
-      // Silently inject the password into the kernel as an environment variable.
-      // Using silent:true means no output, no history entry — it never appears in
-      // the notebook. The setup cell reads it back via os.environ.get("_DREMIO_PWD").
-      if (creds.password) {
-        const kernel = panel.sessionContext.session?.kernel;
-        if (kernel) {
-          kernel.requestExecute({
-            code: `import os; os.environ["_DREMIO_PWD"] = "${esc(creds.password)}"`,
-            silent: true,
-            store_history: false,
-          });
-        }
+      // Silently inject username + password into the kernel as environment variables.
+      // silent:true means no output, no history entry — never visible in the notebook.
+      // The setup cell reads them back via os.environ.get("_DREMIO_USER/PWD").
+      const kernel = panel.sessionContext.session?.kernel;
+      if (kernel && (creds.username || creds.password)) {
+        const injections: string[] = ['import os'];
+        if (creds.username) injections.push(`os.environ["_DREMIO_USER"] = "${esc(creds.username)}"`);
+        if (creds.password) injections.push(`os.environ["_DREMIO_PWD"] = "${esc(creds.password)}"`);
+        kernel.requestExecute({
+          code: injections.join('; '),
+          silent: true,
+          store_history: false,
+        });
       }
 
       app.shell.activateById(panel.id);
