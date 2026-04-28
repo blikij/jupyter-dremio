@@ -21,7 +21,7 @@ type Mode = 'detecting' | 'proxy' | 'direct';
 interface Props {
   onShowWiki: (name: string, markdown: string) => void;
   onShowJobs: (creds: DremioCredentials) => void;
-  onNewNotebook: (creds: DremioCredentials) => void;
+  onNewNotebook: (creds: DremioCredentials, item: CatalogItem | null) => void;
 }
 
 export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): JSX.Element {
@@ -219,7 +219,7 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
         onLogout={handleLogout}
         onCreateFolder={() => { void handleCreateFolder(); }}
         onShowJobs={() => onShowJobs(creds)}
-        onNewNotebook={() => onNewNotebook(creds)}
+        onNewNotebook={() => onNewNotebook(creds, selectedItem)}
       />
       <div className="dremio-search-bar">
         <input

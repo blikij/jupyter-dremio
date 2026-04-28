@@ -158,8 +158,9 @@ export function CatalogNode({
   const handleDragStart = (e: React.DragEvent) => {
     let text: string;
     if (dataset) {
-      // Build a clean alias from the table name (spaces → underscores).
-      const alias = displayName.replace(/\s+/g, '_');
+      // Quote the alias so names with spaces, reserved words, or special
+      // characters work in all cases. Escape any embedded double-quotes.
+      const alias = `"${displayName.replace(/"/g, '""')}"`;
       const cols = fields.length > 0
         ? fields.map(f => `    "${f.name}"`).join(',\n')
         : '    *';
