@@ -32,11 +32,14 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
   const [rootLoading, setRootLoading] = useState(false);
   const [rootError, setRootError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
+
+  // Search state
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [activeQuery, setActiveQuery] = useState('');   // committed query (debounce or Enter)
   const [searchResults, setSearchResults] = useState<CatalogItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchExpanded, setSearchExpanded] = useState(true);
 
   useEffect(() => {
     detectServerExtension().then(hasProxy => {
@@ -44,24 +47,35 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
     });
   }, []);
 
+  // Debounce: commit the query 400ms after the user stops typing
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(searchQuery), 400);
+    const t = setTimeout(() => {
+      if (searchQuery.trim() !== activeQuery.trim()) {
+        setActiveQuery(searchQuery);
+      }
+    }, 400);
     return () => clearTimeout(t);
-  }, [searchQuery]);
+  }, [searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Run search whenever the committed query changes
   useEffect(() => {
-    if (!creds || !debouncedQuery.trim()) {
+    const q = activeQuery.trim();
+    if (!creds || !q) {
       setSearchResults([]);
       setSearchError(null);
+      setSearchLoading(false);
       return;
     }
     setSearchLoading(true);
     setSearchError(null);
-    fetchCatalogSearch(creds, debouncedQuery.trim())
-      .then(data => setSearchResults(data.data ?? []))
+    fetchCatalogSearch(creds, q)
+      .then(data => {
+        setSearchResults(data.data ?? []);
+        setSearchExpanded(true);
+      })
       .catch(e => setSearchError(e instanceof Error ? e.message : String(e)))
       .finally(() => setSearchLoading(false));
-  }, [creds, debouncedQuery]);
+  }, [creds, activeQuery]);
 
   const selected = selectedItem?.id ?? null;
 
@@ -111,6 +125,9 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
     setRootItems([]);
     setSelectedItem(null);
     setLoginError(null);
+    setSearchQuery('');
+    setActiveQuery('');
+    setSearchResults([]);
   };
 
   const handleRefreshRoot = useCallback(() => {
@@ -146,6 +163,19 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
     [creds, onShowWiki]
   );
 
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      setActiveQuery(searchQuery);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setActiveQuery('');
+    setSearchResults([]);
+    setSearchError(null);
+  };
+
   if (mode === 'detecting') {
     return <div className="dremio-detecting">Connecting…</div>;
   }
@@ -161,7 +191,7 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
     );
   }
 
-  const isSearching = debouncedQuery.trim().length > 0;
+  const hasActiveSearch = activeQuery.trim().length > 0;
 
   return (
     <div className="dremio-panel">
@@ -182,12 +212,13 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
           placeholder="Search catalog…"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
+          onKeyDown={handleSearchKeyDown}
           aria-label="Search Dremio catalog"
         />
         {searchQuery && (
           <button
             className="dremio-search-clear"
-            onClick={() => setSearchQuery('')}
+            onClick={handleClearSearch}
             title="Clear search"
           >
             ×
@@ -195,59 +226,82 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
         )}
       </div>
       <div className="dremio-catalog-tree">
-        {isSearching ? (
-          <>
-            <div className="dremio-search-root-label">Search Results</div>
-            {searchLoading && (
-              <div className="dremio-root-loading">Searching…</div>
+        {/* ── Virtual "Search Results" node — always on top, only when query is active ── */}
+        {hasActiveSearch && (
+          <div className="dremio-node">
+            <div
+              className="dremio-node-row"
+              style={{ paddingLeft: '6px' }}
+              onClick={() => setSearchExpanded(prev => !prev)}
+            >
+              <span className={`dremio-chevron${searchExpanded ? ' dremio-chevron--open' : ''}`}>
+                ›
+              </span>
+              <span className="dremio-node-icon">🔍</span>
+              <span className="dremio-node-label">
+                Search Results
+                {!searchLoading && searchResults.length > 0 && (
+                  <span className="dremio-search-count"> ({searchResults.length})</span>
+                )}
+              </span>
+              {searchLoading && (
+                <span className="dremio-search-spinner">…</span>
+              )}
+            </div>
+            {searchExpanded && (
+              <div className="dremio-node-children">
+                {searchError && (
+                  <div className="dremio-node-error" style={{ paddingLeft: '24px' }}>
+                    {searchError}
+                  </div>
+                )}
+                {!searchLoading && !searchError && searchResults.length === 0 && (
+                  <div className="dremio-node-empty" style={{ paddingLeft: '24px' }}>
+                    No results for "{activeQuery}".
+                  </div>
+                )}
+                {searchResults.map(item => (
+                  <CatalogNode
+                    key={item.id}
+                    item={item}
+                    creds={creds}
+                    depth={1}
+                    selected={selected}
+                    onSelect={setSelectedItem}
+                    onOpenWiki={handleOpenWiki}
+                    onDeleteItem={id => setSearchResults(prev => prev.filter(i => i.id !== id))}
+                  />
+                ))}
+              </div>
             )}
-            {searchError && (
-              <div className="dremio-root-error">{searchError}</div>
-            )}
-            {!searchLoading && !searchError && searchResults.length === 0 && (
-              <div className="dremio-root-empty">No results for "{debouncedQuery}".</div>
-            )}
-            {!searchLoading && searchResults.map(item => (
-              <CatalogNode
-                key={item.id}
-                item={item}
-                creds={creds}
-                depth={0}
-                selected={selected}
-                onSelect={setSelectedItem}
-                onOpenWiki={handleOpenWiki}
-                onDeleteItem={id => setSearchResults(prev => prev.filter(i => i.id !== id))}
-              />
-            ))}
-          </>
-        ) : (
-          <>
-            {rootLoading && (
-              <div className="dremio-root-loading">Loading catalog…</div>
-            )}
-            {rootError && (
-              <div className="dremio-root-error">{rootError}</div>
-            )}
-            {!rootLoading &&
-              rootItems.map(item => (
-                <CatalogNode
-                  key={item.id}
-                  item={item}
-                  creds={creds}
-                  depth={0}
-                  selected={selected}
-                  onSelect={setSelectedItem}
-                  onOpenWiki={handleOpenWiki}
-                  onDeleteItem={id => {
-                    setRootItems(prev => prev.filter(i => i.id !== id));
-                    if (selectedItem?.id === id) setSelectedItem(null);
-                  }}
-                />
-              ))}
-            {!rootLoading && !rootError && rootItems.length === 0 && (
-              <div className="dremio-root-empty">No catalog items found.</div>
-            )}
-          </>
+          </div>
+        )}
+
+        {/* ── Normal catalog tree (always visible) ── */}
+        {rootLoading && (
+          <div className="dremio-root-loading">Loading catalog…</div>
+        )}
+        {rootError && (
+          <div className="dremio-root-error">{rootError}</div>
+        )}
+        {!rootLoading &&
+          rootItems.map(item => (
+            <CatalogNode
+              key={item.id}
+              item={item}
+              creds={creds}
+              depth={0}
+              selected={selected}
+              onSelect={setSelectedItem}
+              onOpenWiki={handleOpenWiki}
+              onDeleteItem={id => {
+                setRootItems(prev => prev.filter(i => i.id !== id));
+                if (selectedItem?.id === id) setSelectedItem(null);
+              }}
+            />
+          ))}
+        {!rootLoading && !rootError && rootItems.length === 0 && (
+          <div className="dremio-root-empty">No catalog items found.</div>
         )}
       </div>
       <div className="dremio-panel-footer">
@@ -264,4 +318,3 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
     </div>
   );
 }
-

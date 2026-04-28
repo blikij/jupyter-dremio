@@ -220,15 +220,18 @@
   background: var(--jp-layout-color4, #bdbdbd);
 }
 
-.dremio-search-root-label {
-  padding: 5px 10px 3px;
-  font-size: 0.8em;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.dremio-search-count {
+  font-weight: 400;
   color: var(--jp-ui-font-color2, #888);
-  border-bottom: 1px solid var(--jp-border-color2, #eee);
-  margin-bottom: 2px;
+  font-size: 0.9em;
+}
+
+.dremio-search-spinner {
+  flex-shrink: 0;
+  font-size: 0.85em;
+  color: var(--jp-ui-font-color2, #888);
+  font-style: italic;
+  margin-left: 4px;
 }
 
 /* ── Catalog tree ─────────────────────────────────────────────────────────── */
