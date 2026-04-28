@@ -223,10 +223,13 @@ class SearchHandler(APIHandler):
         dremio_url = _dremio_url(self)
         token = _dremio_token(self)
         q = self.get_argument("q", "")
-        resp = requests.get(
-            f"{dremio_url}/api/v3/catalog",
-            params={"search": q},
-            headers=_auth_header(token),
+        max_results = int(self.get_argument("maxResults", "50"))
+        # POST /api/v3/search — the proper Dremio full-text catalog search endpoint.
+        # No category filter so tables, views, folders, and spaces all come back.
+        resp = requests.post(
+            f"{dremio_url}/api/v3/search",
+            json={"query": q, "pageToken": "", "maxResults": max_results},
+            headers={**_auth_header(token), "Content-Type": "application/json"},
             timeout=30,
         )
         if not resp.ok:

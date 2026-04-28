@@ -361,19 +361,76 @@ export async function promoteToParquet(
   });
 }
 
+// ---------------------------------------------------------------------------
+// Search — POST /api/v3/search
+// ---------------------------------------------------------------------------
+
+interface SearchResultEntity {
+  id?: string;
+  entityType?: string;
+  type?: string;
+  containerType?: string;
+  datasetType?: string;
+  path?: string[];
+  tag?: string;
+  [key: string]: unknown;
+}
+
+interface SearchHit {
+  entity?: SearchResultEntity;
+  // Some Dremio versions wrap the fields directly at the top level
+  id?: string;
+  path?: string[];
+  entityType?: string;
+  type?: string;
+  containerType?: string;
+  datasetType?: string;
+}
+
+interface DremioSearchResponse {
+  results?: SearchHit[];
+  nextPageToken?: string;
+}
+
+function normaliseSearchHit(hit: SearchHit): CatalogItem | null {
+  // Dremio may wrap the entity in an "entity" sub-object, or put fields at top level.
+  const e: SearchResultEntity = hit.entity ?? (hit as unknown as SearchResultEntity);
+  const path = e.path ?? [];
+  if (!path.length) return null;
+  return {
+    id: e.id ?? path.join('/'),
+    path,
+    entityType: e.entityType as CatalogEntityType | undefined,
+    type: e.type as CatalogEntityType | undefined,
+    containerType: e.containerType as ContainerSubType | undefined,
+    datasetType: e.datasetType as DatasetSubType | undefined,
+    tag: e.tag,
+  };
+}
+
 export async function fetchCatalogSearch(
   creds: DremioCredentials,
-  q: string
+  q: string,
+  maxResults = 50
 ): Promise<CatalogRoot> {
+  const body = JSON.stringify({ query: q, pageToken: '', maxResults });
+  let raw: DremioSearchResponse;
   if (creds.direct) {
-    return directRequest(`${creds.url}/api/v3/catalog?search=${encodeURIComponent(q)}`, {
-      headers: directAuthHeader(creds.token),
+    raw = await directRequest(`${creds.url}/api/v3/search`, {
+      method: 'POST',
+      headers: { ...directAuthHeader(creds.token), 'Content-Type': 'application/json' },
+      body,
+    });
+  } else {
+    raw = await proxyRequest(`dremio/catalog/search?q=${encodeURIComponent(q)}&maxResults=${maxResults}`, {
+      method: 'GET',
+      headers: proxyHeaders(creds),
     });
   }
-  return proxyRequest(`dremio/catalog/search?q=${encodeURIComponent(q)}`, {
-    method: 'GET',
-    headers: proxyHeaders(creds),
-  });
+  const items = (raw.results ?? [])
+    .map(normaliseSearchHit)
+    .filter((x): x is CatalogItem => x !== null);
+  return { data: items };
 }
 
 // ---------------------------------------------------------------------------
