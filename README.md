@@ -41,8 +41,10 @@ A JupyterLab 4.x sidebar extension for browsing and querying the Dremio catalog.
 
 ## Install
 
+Download `jupyter_dremio-0.1.15-py3-none-any.whl` from the [latest release](https://github.com/blikij/jupyter-dremio/releases/latest), then run:
+
 ```bash
-pip install jupyter_dremio-0.1.13-py3-none-any.whl
+pip install jupyter_dremio-0.1.15-py3-none-any.whl
 ```
 
 Restart JupyterLab after installation. The Dremio icon appears in the left sidebar.
@@ -58,6 +60,7 @@ See [INSTALL.md](INSTALL.md) for full installation and verification instructions
 Optional:
 - `requests-kerberos` — for SSO/Kerberos login
 - `adbc-driver-flightsql` + `jupysql` — used by the generated notebooks for running SQL
+- `sqlglot[rs]` — faster SQL parsing used by JupySQL (`pip install sqlglot[rs]`)
 
 ## Changelog
 
