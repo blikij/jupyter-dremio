@@ -2,6 +2,8 @@
 
 A JupyterLab 4.x sidebar extension for browsing and querying the Dremio catalog.
 
+![jupyter-dremio in action](JupyterHubDremio.png)
+
 ## Features
 
 ### Catalog browser
