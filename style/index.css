@@ -1,0 +1,826 @@
+/* ── Sidebar panel shell ──────────────────────────────────────────────────── */
+
+.jp-DremioWidget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--jp-layout-color1, #fff);
+  font-family: var(--jp-ui-font-family, sans-serif);
+  font-size: var(--jp-ui-font-size1, 13px);
+}
+
+/* ── Login form ───────────────────────────────────────────────────────────── */
+
+.dremio-login {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 14px;
+  overflow-y: auto;
+}
+
+.dremio-login-header {
+  margin-bottom: 4px;
+}
+
+.dremio-login-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--jp-ui-font-color0, #111);
+}
+
+.dremio-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dremio-login-label {
+  font-size: 0.85em;
+  font-weight: 500;
+  color: var(--jp-ui-font-color2, #777);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dremio-login-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--jp-border-color1, #d0d0d0);
+  border-radius: 3px;
+  background: var(--jp-layout-color0, #fff);
+  color: var(--jp-ui-font-color0, #111);
+  font-size: var(--jp-ui-font-size1, 13px);
+  font-family: inherit;
+  outline: none;
+}
+
+.dremio-login-input:focus {
+  border-color: var(--jp-brand-color1, #1976d2);
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+}
+
+.dremio-login-input:disabled {
+  opacity: 0.6;
+}
+
+.dremio-login-btn {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding: 7px 12px;
+  border-radius: 3px;
+  border: none;
+  font-size: var(--jp-ui-font-size1, 13px);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.dremio-login-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dremio-login-btn--primary {
+  background: var(--jp-brand-color1, #1976d2);
+  color: #fff;
+  font-weight: 600;
+}
+
+.dremio-login-btn--primary:hover:not(:disabled) {
+  background: var(--jp-brand-color0, #1565c0);
+}
+
+.dremio-login-btn--link {
+  background: transparent;
+  color: var(--jp-brand-color1, #1976d2);
+  text-decoration: underline;
+  padding: 4px 0;
+}
+
+.dremio-login-btn--link:hover:not(:disabled) {
+  color: var(--jp-brand-color0, #1565c0);
+}
+
+.dremio-login-error {
+  padding: 7px 10px;
+  border-radius: 3px;
+  background: var(--jp-error-color3, #ffebee);
+  border: 1px solid var(--jp-error-color2, #ef9a9a);
+  color: var(--jp-error-color0, #c62828);
+  font-size: 0.9em;
+  word-break: break-word;
+}
+
+.dremio-login-notice {
+  font-size: 0.85em;
+  color: var(--jp-ui-font-color2, #888);
+  font-style: italic;
+}
+
+/* ── Toolbar ──────────────────────────────────────────────────────────────── */
+
+.dremio-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--jp-border-color1, #d0d0d0);
+  background: var(--jp-layout-color2, #f5f5f5);
+  flex-shrink: 0;
+}
+
+.dremio-toolbar-spacer {
+  flex: 1;
+}
+
+.dremio-toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--jp-ui-font-color1, #333);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.dremio-toolbar-btn:hover {
+  background: var(--jp-layout-color3, #e0e0e0);
+}
+
+.dremio-toolbar-btn--logout {
+  color: var(--jp-ui-font-color2, #888);
+}
+
+.dremio-toolbar-btn--logout:hover {
+  color: var(--jp-error-color1, #e53935);
+  background: var(--jp-layout-color3, #e0e0e0);
+}
+
+/* ── Catalog tree ─────────────────────────────────────────────────────────── */
+
+.dremio-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.dremio-catalog-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.dremio-panel-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-top: 1px solid var(--jp-border-color1, #d0d0d0);
+  background: var(--jp-layout-color2, #f5f5f5);
+  font-size: 0.8em;
+  color: var(--jp-ui-font-color2, #888);
+  flex-shrink: 0;
+}
+
+.dremio-mode-badge {
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--jp-warn-color3, #fff8e1);
+  border: 1px solid var(--jp-warn-color2, #ffe082);
+  color: var(--jp-warn-color0, #e65100);
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+/* ── Tree nodes ───────────────────────────────────────────────────────────── */
+
+.dremio-node {
+  user-select: none;
+}
+
+.dremio-node-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  cursor: pointer;
+  border-radius: 3px;
+  color: var(--jp-ui-font-color1, #333);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.dremio-node-row:hover {
+  background: var(--jp-layout-color2, #f0f0f0);
+}
+
+.dremio-node--selected > .dremio-node-row {
+  background: var(--jp-brand-color3, #bbdefb);
+  color: var(--jp-ui-font-color0, #111);
+}
+
+.dremio-chevron {
+  display: inline-block;
+  width: 12px;
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+  color: var(--jp-ui-font-color2, #888);
+}
+
+.dremio-chevron--open {
+  transform: rotate(90deg);
+}
+
+.dremio-chevron--leaf {
+  visibility: hidden;
+}
+
+.dremio-node-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.dremio-node-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--jp-ui-font-size1, 13px);
+}
+
+.dremio-refresh-btn {
+  visibility: hidden;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--jp-ui-font-color2, #888);
+  padding: 0 2px;
+  font-size: 13px;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+
+.dremio-node-row:hover .dremio-refresh-btn {
+  visibility: visible;
+}
+
+.dremio-refresh-btn:hover {
+  color: var(--jp-ui-font-color0, #111);
+  background: var(--jp-layout-color3, #e0e0e0);
+}
+
+.dremio-node-error {
+  font-size: 0.85em;
+  color: var(--jp-error-color1, #e53935);
+  padding: 2px 0;
+}
+
+.dremio-node-loading,
+.dremio-node-empty,
+.dremio-root-loading,
+.dremio-root-error,
+.dremio-root-empty,
+.dremio-detecting {
+  padding: 6px 14px;
+  font-size: 0.9em;
+  color: var(--jp-ui-font-color2, #888);
+  font-style: italic;
+}
+
+.dremio-root-error {
+  color: var(--jp-error-color1, #e53935);
+  font-style: normal;
+}
+
+/* ── Context menu ─────────────────────────────────────────────────────────── */
+
+.dremio-context-menu {
+  z-index: 10000;
+  min-width: 180px;
+  background: var(--jp-layout-color1, #fff);
+  border: 1px solid var(--jp-border-color1, #d0d0d0);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  font-size: var(--jp-ui-font-size1, 13px);
+  font-family: var(--jp-ui-font-family, sans-serif);
+}
+
+.dremio-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: var(--jp-ui-font-color1, #333);
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dremio-context-menu-item:hover:not(:disabled) {
+  background: var(--jp-layout-color2, #efefef);
+}
+
+.dremio-context-menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.dremio-context-menu-item--danger {
+  color: var(--jp-error-color1, #e53935);
+}
+
+.dremio-context-menu-item--danger:hover:not(:disabled) {
+  background: var(--jp-error-color3, #ffebee);
+  color: var(--jp-error-color0, #c62828);
+}
+
+.dremio-context-menu-separator {
+  height: 1px;
+  background: var(--jp-border-color1, #d0d0d0);
+  margin: 4px 0;
+}
+
+.dremio-toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dremio-toolbar-btn:disabled:hover {
+  background: transparent;
+}
+
+.dremio-context-menu-icon {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ── Jobs widget (main-area tab) ─────────────────────────────────────────── */
+
+.jp-DremioJobsWidget {
+  overflow: hidden;
+  background: var(--jp-layout-color1, #fff);
+}
+
+.dremio-jobs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--jp-ui-font-family, sans-serif);
+  font-size: var(--jp-ui-font-size1, 13px);
+  color: var(--jp-ui-font-color1, #333);
+}
+
+/* Two-column layout: sidebar + main */
+.dremio-jobs-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Status sidebar ─────────────── */
+
+.dremio-jobs-sidebar {
+  width: 140px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--jp-border-color1, #d0d0d0);
+  background: var(--jp-layout-color2, #f5f5f5);
+  padding: 10px 8px;
+  overflow-y: auto;
+}
+
+.dremio-jobs-sidebar-title {
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--jp-ui-font-color2, #888);
+  margin-bottom: 8px;
+}
+
+.dremio-jobs-status-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: var(--jp-ui-font-color1, #333);
+  border-radius: 3px;
+}
+
+.dremio-jobs-status-label:hover {
+  background: var(--jp-layout-color3, #e8e8e8);
+}
+
+.dremio-jobs-status-all {
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.dremio-jobs-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dremio-jobs-dot--completed   { background: #2e7d32; }
+.dremio-jobs-dot--cancelled   { background: #757575; }
+.dremio-jobs-dot--failed      { background: #c62828; }
+.dremio-jobs-dot--queued      { background: #e65100; }
+.dremio-jobs-dot--planning    { background: #283593; }
+.dremio-jobs-dot--engine-start{ background: #6a1b9a; }
+
+/* ── Main area ───────────────────── */
+
+.dremio-jobs-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Top toolbar */
+.dremio-jobs-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--jp-border-color1, #d0d0d0);
+  background: var(--jp-layout-color2, #f5f5f5);
+  flex-shrink: 0;
+}
+
+.dremio-jobs-topbar-spacer {
+  flex: 1;
+}
+
+.dremio-jobs-count {
+  font-size: 0.85em;
+  color: var(--jp-ui-font-color2, #888);
+}
+
+/* Column selector */
+.dremio-jobs-col-wrapper {
+  position: relative;
+}
+
+.dremio-jobs-col-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--jp-border-color1, #ccc);
+  border-radius: 3px;
+  background: var(--jp-layout-color1, #fff);
+  color: var(--jp-ui-font-color1, #333);
+  font-size: var(--jp-ui-font-size1, 13px);
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dremio-jobs-col-btn:hover {
+  background: var(--jp-layout-color3, #e8e8e8);
+}
+
+.dremio-jobs-col-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 9000;
+  min-width: 160px;
+  background: var(--jp-layout-color1, #fff);
+  border: 1px solid var(--jp-border-color1, #d0d0d0);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 4px 0;
+}
+
+.dremio-jobs-col-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  cursor: pointer;
+  font-size: var(--jp-ui-font-size1, 13px);
+  color: var(--jp-ui-font-color1, #333);
+}
+
+.dremio-jobs-col-option:hover {
+  background: var(--jp-layout-color2, #f0f0f0);
+}
+
+/* Refresh button */
+.dremio-jobs-refresh-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--jp-border-color1, #ccc);
+  border-radius: 3px;
+  background: var(--jp-layout-color1, #fff);
+  color: var(--jp-ui-font-color1, #333);
+  font-size: var(--jp-ui-font-size1, 13px);
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dremio-jobs-refresh-btn:hover:not(:disabled) {
+  background: var(--jp-layout-color3, #e8e8e8);
+}
+
+.dremio-jobs-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error banner */
+.dremio-jobs-error {
+  padding: 8px 12px;
+  margin: 6px 10px;
+  border-radius: 3px;
+  background: var(--jp-error-color3, #ffebee);
+  border: 1px solid var(--jp-error-color2, #ef9a9a);
+  color: var(--jp-error-color0, #c62828);
+  font-size: 0.9em;
+}
+
+/* ── Table ───────────────────────── */
+
+.dremio-jobs-table-wrap {
+  flex: 1;
+  overflow: auto;
+}
+
+.dremio-jobs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--jp-ui-font-size1, 13px);
+  white-space: nowrap;
+}
+
+.dremio-jobs-th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 10px;
+  background: var(--jp-layout-color2, #f0f0f0);
+  border-bottom: 2px solid var(--jp-border-color1, #d0d0d0);
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85em;
+  color: var(--jp-ui-font-color2, #555);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.dremio-jobs-th--acceleration { text-align: center; width: 28px; }
+.dremio-jobs-th--id           { min-width: 90px; }
+.dremio-jobs-th--sql          { min-width: 200px; max-width: 400px; }
+.dremio-jobs-th--startedAt    { min-width: 140px; }
+.dremio-jobs-th--duration     { min-width: 70px; }
+
+.dremio-jobs-td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--jp-border-color2, #e8e8e8);
+  vertical-align: middle;
+  color: var(--jp-ui-font-color1, #333);
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dremio-jobs-td--acceleration { text-align: center; }
+
+.dremio-jobs-td--sql {
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dremio-jobs-row:hover > .dremio-jobs-td {
+  background: var(--jp-layout-color2, #f7f7f7);
+}
+
+/* State badge */
+.dremio-jobs-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dremio-jobs-badge--completed   { background: #e8f5e9; color: #2e7d32; }
+.dremio-jobs-badge--cancelled   { background: #f5f5f5; color: #616161; }
+.dremio-jobs-badge--failed      { background: #ffebee; color: #c62828; }
+.dremio-jobs-badge--running     { background: #e3f2fd; color: #1565c0; }
+.dremio-jobs-badge--queued      { background: #fff8e1; color: #e65100; }
+.dremio-jobs-badge--planning    { background: #e8eaf6; color: #283593; }
+.dremio-jobs-badge--engine-start{ background: #f3e5f5; color: #6a1b9a; }
+.dremio-jobs-badge--starting    { background: #e0f2f1; color: #00695c; }
+.dremio-jobs-badge--unknown     { background: var(--jp-layout-color3, #eee); color: var(--jp-ui-font-color2, #666); }
+
+/* Placeholder rows */
+.dremio-jobs-placeholder {
+  padding: 24px;
+  text-align: center;
+  color: var(--jp-ui-font-color2, #888);
+  font-style: italic;
+}
+
+/* Cell helpers */
+.dremio-jobs-mono {
+  font-family: var(--jp-code-font-family, monospace);
+  font-size: 0.9em;
+}
+
+.dremio-jobs-sql {
+  font-family: var(--jp-code-font-family, monospace);
+  font-size: 0.85em;
+  color: var(--jp-ui-font-color2, #555);
+}
+
+.dremio-jobs-accel {
+  font-size: 14px;
+}
+
+/* ── Wiki widget (main-area tab) ──────────────────────────────────────────── */
+
+.jp-DremioWikiWidget {
+  overflow: auto;
+  background: var(--jp-layout-color1, #fff);
+}
+
+.dremio-wiki {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+  font-family: var(--jp-content-font-family, Georgia, serif);
+  font-size: var(--jp-content-font-size1, 14px);
+  color: var(--jp-content-font-color1, #212121);
+  line-height: 1.7;
+}
+
+.dremio-wiki-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--jp-border-color1, #d0d0d0);
+}
+
+.dremio-wiki-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.dremio-wiki-title {
+  font-size: 1.5em;
+  font-weight: 600;
+  font-family: var(--jp-ui-font-family, sans-serif);
+  color: var(--jp-ui-font-color0, #111);
+}
+
+/* Rendered markdown content */
+.dremio-wiki-content h1,
+.dremio-wiki-content h2,
+.dremio-wiki-content h3,
+.dremio-wiki-content h4,
+.dremio-wiki-content h5,
+.dremio-wiki-content h6 {
+  font-family: var(--jp-ui-font-family, sans-serif);
+  font-weight: 600;
+  margin-top: 1.4em;
+  margin-bottom: 0.4em;
+  color: var(--jp-ui-font-color0, #111);
+  line-height: 1.3;
+}
+
+.dremio-wiki-content h1 { font-size: 1.6em; border-bottom: 1px solid var(--jp-border-color1, #d0d0d0); padding-bottom: 6px; }
+.dremio-wiki-content h2 { font-size: 1.3em; }
+.dremio-wiki-content h3 { font-size: 1.1em; }
+
+.dremio-wiki-content p {
+  margin: 0.6em 0;
+}
+
+.dremio-wiki-content a {
+  color: var(--jp-brand-color1, #1976d2);
+  text-decoration: none;
+}
+
+.dremio-wiki-content a:hover {
+  text-decoration: underline;
+}
+
+.dremio-wiki-content code {
+  font-family: var(--jp-code-font-family, monospace);
+  font-size: 0.88em;
+  background: var(--jp-layout-color2, #f5f5f5);
+  border: 1px solid var(--jp-border-color2, #e0e0e0);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.dremio-wiki-content pre {
+  background: var(--jp-layout-color2, #f5f5f5);
+  border: 1px solid var(--jp-border-color2, #e0e0e0);
+  border-radius: 4px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.dremio-wiki-content pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.9em;
+}
+
+.dremio-wiki-content ul,
+.dremio-wiki-content ol {
+  padding-left: 1.6em;
+  margin: 0.5em 0;
+}
+
+.dremio-wiki-content li {
+  margin: 0.25em 0;
+}
+
+.dremio-wiki-content blockquote {
+  border-left: 4px solid var(--jp-border-color1, #d0d0d0);
+  margin: 0.8em 0;
+  padding: 4px 16px;
+  color: var(--jp-ui-font-color2, #666);
+  font-style: italic;
+}
+
+/* ── Column fields (dataset expand) ──────────────────────────────────────── */
+
+.dremio-field-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  color: var(--jp-ui-font-color2, #666);
+  font-size: 0.88em;
+}
+
+.dremio-field-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dremio-field-badge {
+  flex-shrink: 0;
+  font-size: 0.78em;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: var(--jp-brand-color2, #7b9fc9);
+}
+
+.dremio-field-badge--abc  { background: #4a90d9; }
+.dremio-field-badge--123  { background: #5b8a58; }
+.dremio-field-badge--1\\.5 { background: #6b7faa; }
+.dremio-field-badge--T\\/F { background: #a06abf; }
+.dremio-field-badge--dt   { background: #b5773b; }
+.dremio-field-badge--ts   { background: #c7673c; }
+.dremio-field-badge--bin  { background: #808080; }
+
+/* ── SVG icons in node rows ───────────────────────────────────────────────── */
+
+.dremio-node-icon svg {
+  vertical-align: middle;
+  color: var(--jp-ui-font-color1, #333);
+}
+
+.dremio-wiki-content hr {
+  border: none;
+  border-top: 1px solid var(--jp-border-color1, #d0d0d0);
+  margin: 1.5em 0;
+}
