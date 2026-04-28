@@ -26,6 +26,8 @@ A JupyterLab 4.x sidebar extension for browsing and querying the Dremio catalog.
 
 ### Notebooks
 - **New Notebook** button — opens a Python 3 notebook pre-wired with an ADBC/JupySQL connection to Dremio, including a `%%sql` cell ready to run
+- **Secure by design** — username and password are injected silently into the running kernel and never stored in the `.ipynb` file, so notebooks are safe to share or commit to version control
+- If a catalog item is selected, the `%%sql` cell is pre-filled with a `USE "space"."folder";` statement so queries run in the right context immediately
 
 ### Jobs viewer
 - **Jobs** button — opens a main-area tab showing recent Dremio job history with status badges, duration, SQL preview, and column selector
@@ -56,6 +58,17 @@ Optional:
 - `adbc-driver-flightsql` + `jupysql` — used by the generated notebooks for running SQL
 
 ## Changelog
+
+### 0.1.15
+- **Secure notebooks** — username and password are never written into the `.ipynb` file.
+  They are injected silently into the kernel's environment at notebook creation time
+  (`os.environ["_DREMIO_USER"]` / `os.environ["_DREMIO_PWD"]`), so notebooks can be
+  freely shared or committed to version control without exposing credentials.
+- **USE context** — if a folder or table is selected in the catalog tree when clicking
+  New Notebook, the `%%sql` cell is pre-filled with `USE "space"."folder";` so queries
+  run in the right context without typing the full path.
+- **Quoted SQL aliases** — drag-and-drop now generates `AS "Table Name"` (double-quoted)
+  so names with spaces, reserved words, or special characters work in all cases.
 
 ### 0.1.13
 - Full-text catalog search via Dremio `POST /api/v3/search` (TABLE and VIEW only)
