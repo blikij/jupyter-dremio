@@ -11,6 +11,7 @@ import {
   ssoLogout,
   fetchRootCatalog,
   fetchWiki,
+  fetchCatalogSearch,
   createFolder,
   detectServerExtension,
 } from '../api';
@@ -31,12 +32,36 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
   const [rootLoading, setRootLoading] = useState(false);
   const [rootError, setRootError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<CatalogItem[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   useEffect(() => {
     detectServerExtension().then(hasProxy => {
       setMode(hasProxy ? 'proxy' : 'direct');
     });
   }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery), 400);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (!creds || !debouncedQuery.trim()) {
+      setSearchResults([]);
+      setSearchError(null);
+      return;
+    }
+    setSearchLoading(true);
+    setSearchError(null);
+    fetchCatalogSearch(creds, debouncedQuery.trim())
+      .then(data => setSearchResults(data.data ?? []))
+      .catch(e => setSearchError(e instanceof Error ? e.message : String(e)))
+      .finally(() => setSearchLoading(false));
+  }, [creds, debouncedQuery]);
 
   const selected = selectedItem?.id ?? null;
 
@@ -136,6 +161,8 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
     );
   }
 
+  const isSearching = debouncedQuery.trim().length > 0;
+
   return (
     <div className="dremio-panel">
       <Toolbar
@@ -148,31 +175,79 @@ export function DremioPanel({ onShowWiki, onShowJobs, onNewNotebook }: Props): J
         onShowJobs={() => onShowJobs(creds)}
         onNewNotebook={() => onNewNotebook(creds)}
       />
+      <div className="dremio-search-bar">
+        <input
+          className="dremio-search-input"
+          type="search"
+          placeholder="Search catalog…"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          aria-label="Search Dremio catalog"
+        />
+        {searchQuery && (
+          <button
+            className="dremio-search-clear"
+            onClick={() => setSearchQuery('')}
+            title="Clear search"
+          >
+            ×
+          </button>
+        )}
+      </div>
       <div className="dremio-catalog-tree">
-        {rootLoading && (
-          <div className="dremio-root-loading">Loading catalog…</div>
-        )}
-        {rootError && (
-          <div className="dremio-root-error">{rootError}</div>
-        )}
-        {!rootLoading &&
-          rootItems.map(item => (
-            <CatalogNode
-              key={item.id}
-              item={item}
-              creds={creds}
-              depth={0}
-              selected={selected}
-              onSelect={setSelectedItem}
-              onOpenWiki={handleOpenWiki}
-              onDeleteItem={id => {
-                setRootItems(prev => prev.filter(i => i.id !== id));
-                if (selectedItem?.id === id) setSelectedItem(null);
-              }}
-            />
-          ))}
-        {!rootLoading && !rootError && rootItems.length === 0 && (
-          <div className="dremio-root-empty">No catalog items found.</div>
+        {isSearching ? (
+          <>
+            <div className="dremio-search-root-label">Search Results</div>
+            {searchLoading && (
+              <div className="dremio-root-loading">Searching…</div>
+            )}
+            {searchError && (
+              <div className="dremio-root-error">{searchError}</div>
+            )}
+            {!searchLoading && !searchError && searchResults.length === 0 && (
+              <div className="dremio-root-empty">No results for "{debouncedQuery}".</div>
+            )}
+            {!searchLoading && searchResults.map(item => (
+              <CatalogNode
+                key={item.id}
+                item={item}
+                creds={creds}
+                depth={0}
+                selected={selected}
+                onSelect={setSelectedItem}
+                onOpenWiki={handleOpenWiki}
+                onDeleteItem={id => setSearchResults(prev => prev.filter(i => i.id !== id))}
+              />
+            ))}
+          </>
+        ) : (
+          <>
+            {rootLoading && (
+              <div className="dremio-root-loading">Loading catalog…</div>
+            )}
+            {rootError && (
+              <div className="dremio-root-error">{rootError}</div>
+            )}
+            {!rootLoading &&
+              rootItems.map(item => (
+                <CatalogNode
+                  key={item.id}
+                  item={item}
+                  creds={creds}
+                  depth={0}
+                  selected={selected}
+                  onSelect={setSelectedItem}
+                  onOpenWiki={handleOpenWiki}
+                  onDeleteItem={id => {
+                    setRootItems(prev => prev.filter(i => i.id !== id));
+                    if (selectedItem?.id === id) setSelectedItem(null);
+                  }}
+                />
+              ))}
+            {!rootLoading && !rootError && rootItems.length === 0 && (
+              <div className="dremio-root-empty">No catalog items found.</div>
+            )}
+          </>
         )}
       </div>
       <div className="dremio-panel-footer">

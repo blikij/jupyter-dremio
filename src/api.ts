@@ -336,6 +336,46 @@ export async function fetchJobs(
   });
 }
 
+export async function promoteToParquet(
+  creds: DremioCredentials,
+  item: CatalogItem
+): Promise<CatalogItem> {
+  const body = {
+    entityType: 'dataset',
+    id: item.id,
+    path: item.path,
+    type: 'PHYSICAL_DATASET',
+    format: { type: 'Parquet' },
+  };
+  if (creds.direct) {
+    return directRequest(`${creds.url}/api/v3/catalog/${encodeURIComponent(item.id)}`, {
+      method: 'PUT',
+      headers: { ...directAuthHeader(creds.token), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+  return proxyRequest(`dremio/catalog/${encodeURIComponent(item.id)}`, {
+    method: 'PUT',
+    headers: proxyHeaders(creds),
+    body: JSON.stringify(body),
+  });
+}
+
+export async function fetchCatalogSearch(
+  creds: DremioCredentials,
+  q: string
+): Promise<CatalogRoot> {
+  if (creds.direct) {
+    return directRequest(`${creds.url}/api/v3/catalog?search=${encodeURIComponent(q)}`, {
+      headers: directAuthHeader(creds.token),
+    });
+  }
+  return proxyRequest(`dremio/catalog/search?q=${encodeURIComponent(q)}`, {
+    method: 'GET',
+    headers: proxyHeaders(creds),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Utility helpers
 // ---------------------------------------------------------------------------
@@ -346,6 +386,10 @@ export function buildSqlPath(path: string[]): string {
 
 export function isDataset(item: CatalogItem): boolean {
   return item.entityType === 'DATASET' || item.type === 'DATASET';
+}
+
+export function isFile(item: CatalogItem): boolean {
+  return item.entityType === 'FILE' || item.type === 'FILE';
 }
 
 export function isContainer(item: CatalogItem): boolean {

@@ -186,6 +186,22 @@ class CatalogItemHandler(APIHandler):
         self.finish(resp.json())
 
     @web.authenticated
+    def put(self, item_id: str):
+        dremio_url = _dremio_url(self)
+        token = _dremio_token(self)
+        encoded = urllib.parse.quote(item_id, safe="")
+        body = json.loads(self.request.body)
+        resp = requests.put(
+            f"{dremio_url}/api/v3/catalog/{encoded}",
+            json=body,
+            headers={**_auth_header(token), "Content-Type": "application/json"},
+            timeout=30,
+        )
+        if not resp.ok:
+            raise web.HTTPError(resp.status_code, resp.text)
+        self.finish(resp.json())
+
+    @web.authenticated
     def delete(self, item_id: str):
         dremio_url = _dremio_url(self)
         token = _dremio_token(self)
@@ -199,6 +215,23 @@ class CatalogItemHandler(APIHandler):
             raise web.HTTPError(resp.status_code, resp.text)
         self.set_status(204)
         self.finish()
+
+
+class SearchHandler(APIHandler):
+    @web.authenticated
+    def get(self):
+        dremio_url = _dremio_url(self)
+        token = _dremio_token(self)
+        q = self.get_argument("q", "")
+        resp = requests.get(
+            f"{dremio_url}/api/v3/catalog",
+            params={"search": q},
+            headers=_auth_header(token),
+            timeout=30,
+        )
+        if not resp.ok:
+            raise web.HTTPError(resp.status_code, resp.text)
+        self.finish(resp.json())
 
 
 class FolderHandler(APIHandler):
@@ -285,6 +318,7 @@ def setup_handlers(web_app):
         (f"{base}/dremio/sso-login", SsoLoginHandler),
         (f"{base}/dremio/sso-logout", SsoLogoutHandler),
         (f"{base}/dremio/catalog/folder", FolderHandler),
+        (f"{base}/dremio/catalog/search", SearchHandler),
         (f"{base}/dremio/wiki/(.+)", WikiHandler),
         (f"{base}/dremio/jobs", JobsHandler),
         (f"{base}/dremio/catalog", RootCatalogHandler),

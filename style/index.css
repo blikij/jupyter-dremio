@@ -166,6 +166,71 @@
   background: var(--jp-layout-color3, #e0e0e0);
 }
 
+/* ── Search bar ───────────────────────────────────────────────────────────── */
+
+.dremio-search-bar {
+  display: flex;
+  align-items: center;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--jp-border-color1, #d0d0d0);
+  background: var(--jp-layout-color1, #fff);
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.dremio-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 7px;
+  border: 1px solid var(--jp-border-color1, #d0d0d0);
+  border-radius: 3px;
+  background: var(--jp-layout-color0, #fff);
+  color: var(--jp-ui-font-color0, #111);
+  font-size: var(--jp-ui-font-size1, 13px);
+  font-family: inherit;
+  outline: none;
+}
+
+.dremio-search-input:focus {
+  border-color: var(--jp-brand-color1, #1976d2);
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.12);
+}
+
+/* hide the native clear button — we provide our own */
+.dremio-search-input::-webkit-search-cancel-button { display: none; }
+
+.dremio-search-clear {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: var(--jp-layout-color3, #e0e0e0);
+  color: var(--jp-ui-font-color1, #333);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.dremio-search-clear:hover {
+  background: var(--jp-layout-color4, #bdbdbd);
+}
+
+.dremio-search-root-label {
+  padding: 5px 10px 3px;
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--jp-ui-font-color2, #888);
+  border-bottom: 1px solid var(--jp-border-color2, #eee);
+  margin-bottom: 2px;
+}
+
 /* ── Catalog tree ─────────────────────────────────────────────────────────── */
 
 .dremio-panel {

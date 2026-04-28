@@ -6,8 +6,10 @@ import {
   ColumnField,
   fetchCatalogItem,
   deleteCatalogItem,
+  promoteToParquet,
   isContainer,
   isDataset,
+  isFile,
   buildSqlPath,
   itemIcon,
 } from '../api';
@@ -105,6 +107,7 @@ export function CatalogNode({
   const displayName = item.path[item.path.length - 1] ?? item.id;
   const container = isContainer(item);
   const dataset = isDataset(item);
+  const file = isFile(item);
   const expandable = container || dataset;
   const isSelected = selected === item.id;
   const sqlPath = buildSqlPath(item.path);
@@ -192,6 +195,15 @@ export function CatalogNode({
     }
   };
 
+  const handlePromote = async () => {
+    if (!window.confirm(`Register "${displayName}" as a Parquet physical dataset?`)) return;
+    try {
+      await promoteToParquet(creds, item);
+    } catch (e) {
+      alert(`Promote failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+
   return (
     <div className={`dremio-node${isSelected ? ' dremio-node--selected' : ''}`}>
       <div
@@ -234,11 +246,17 @@ export function CatalogNode({
               label: 'Copy path to clipboard',
               onClick: copyPathToClipboard,
             },
+            ...(file ? [{
+              icon: '🗂️',
+              label: 'Register as Parquet table',
+              onClick: () => { void handlePromote(); },
+              separator: true,
+            }] : []),
             ...(deleteLabel ? [{
               icon: '🗑️',
               label: deleteLabel,
               onClick: () => { void handleDelete(); },
-              separator: true,
+              separator: !file,
               danger: true,
             }] : []),
           ]}
