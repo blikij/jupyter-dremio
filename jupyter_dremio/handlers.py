@@ -170,14 +170,27 @@ class RootCatalogHandler(APIHandler):
         self.finish(resp.json())
 
 
+def _catalog_url(dremio_url: str, item_id: str) -> str:
+    """Return the correct Dremio catalog URL for item_id.
+
+    Search results are tagged with a 'path:' sentinel when they don't carry
+    a real UUID (Dremio omits the id field for some result types).  Those must
+    be looked up via the by-path endpoint; UUID-style ids use the normal route.
+    """
+    if item_id.startswith("path:"):
+        segments = item_id[5:].split("/")
+        encoded_path = "/".join(urllib.parse.quote(s, safe="") for s in segments)
+        return f"{dremio_url}/api/v3/catalog/by-path/{encoded_path}"
+    return f"{dremio_url}/api/v3/catalog/{urllib.parse.quote(item_id, safe='')}"
+
+
 class CatalogItemHandler(APIHandler):
     @web.authenticated
     def get(self, item_id: str):
         dremio_url = _dremio_url(self)
         token = _dremio_token(self)
-        encoded = urllib.parse.quote(item_id, safe="")
         resp = requests.get(
-            f"{dremio_url}/api/v3/catalog/{encoded}",
+            _catalog_url(dremio_url, item_id),
             headers=_auth_header(token),
             timeout=30,
         )
@@ -228,7 +241,7 @@ class SearchHandler(APIHandler):
             f"{dremio_url}/api/v3/search",
             json={
                 "query": q,
-                "filter": 'category in ["TABLE", "VIEW", "FOLDER", "SPACE", "SOURCE"]',
+                "filter": 'category in ["TABLE", "VIEW"]',
                 "pageToken": "",
                 "maxResults": max_results,
             },

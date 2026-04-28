@@ -407,8 +407,13 @@ function normaliseSearchResult(result: SearchResult): CatalogItem | null {
       entityType = 'CONTAINER';
   }
 
+  // Dremio search results often omit the UUID id field. We use a 'path:' prefix
+  // as a sentinel so the backend knows to call /api/v3/catalog/by-path/... instead
+  // of /api/v3/catalog/{uuid}. This is always safe — by-path works for any item.
+  const id = `path:${path.join('/')}`;
+
   return {
-    id: (obj.id as string | undefined) ?? path.join('/'),
+    id,
     path,
     entityType,
     type: entityType,
@@ -430,7 +435,7 @@ export async function fetchCatalogSearch(
       headers: { ...directAuthHeader(creds.token), 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query: q,
-        filter: 'category in ["TABLE", "VIEW", "FOLDER", "SPACE", "SOURCE"]',
+        filter: 'category in ["TABLE", "VIEW"]',
         pageToken: '',
         maxResults,
       }),
