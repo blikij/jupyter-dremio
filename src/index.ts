@@ -114,17 +114,20 @@ const plugin: JupyterFrontEndPlugin<void> = {
       let code: string;
 
       if (creds.username && creds.password) {
-        // Regular login: both credentials available — inject directly.
+        // Regular login — password is injected into the kernel silently (see below),
+        // so the notebook cell reads it from os.environ without storing it on disk.
         code =
           `from adbc_driver_flightsql import dbapi\n` +
-          `import pandas as pd\n` +
+          `import os, pandas as pd\n` +
           `\n` +
           `# Logged in as: ${creds.username}\n` +
+          `# Password was injected into this kernel's environment at notebook creation.\n` +
           `dremio_conn = dbapi.connect(\n` +
           `    "${flightUrl}",\n` +
           `    db_kwargs={\n` +
           `        "username": "${esc(creds.username)}",\n` +
-          `        "password": "${esc(creds.password)}",\n` +
+          `        "password": os.environ.get("_DREMIO_PWD", ""),\n` +
+          `        "adbc.flight.sql.rpc.with_cookie_middleware": "true",\n` +
           `    },\n` +
           `)\n` +
           `\n` +
@@ -142,14 +145,18 @@ const plugin: JupyterFrontEndPlugin<void> = {
           : `_username = input("Dremio username: ")\n`;
         code =
           `from adbc_driver_flightsql import dbapi\n` +
-          `import pandas as pd, getpass\n` +
+          `import os, pandas as pd, getpass\n` +
           `\n` +
           usernameLine +
-          `_password = getpass.getpass(f"Dremio password for {_username}: ")\n` +
+          `_password = os.environ.get("_DREMIO_PWD") or getpass.getpass(f"Dremio password for {_username}: ")\n` +
           `\n` +
           `dremio_conn = dbapi.connect(\n` +
           `    "${flightUrl}",\n` +
-          `    db_kwargs={"username": _username, "password": _password},\n` +
+          `    db_kwargs={\n` +
+          `        "username": _username,\n` +
+          `        "password": _password,\n` +
+          `        "adbc.flight.sql.rpc.with_cookie_middleware": "true",\n` +
+          `    },\n` +
           `)\n` +
           `\n` +
           `%load_ext sql\n` +
@@ -168,6 +175,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
       if (!panel) return;
 
       await panel.context.ready;
+      // Wait for the kernel to be fully connected before injecting credentials.
+      await panel.sessionContext.ready;
 
       const model = panel.content.model;
       if (!model) return;
@@ -216,6 +225,20 @@ const plugin: JupyterFrontEndPlugin<void> = {
         source: '%%sql\n',
         metadata: {},
       });
+
+      // Silently inject the password into the kernel as an environment variable.
+      // Using silent:true means no output, no history entry — it never appears in
+      // the notebook. The setup cell reads it back via os.environ.get("_DREMIO_PWD").
+      if (creds.password) {
+        const kernel = panel.sessionContext.session?.kernel;
+        if (kernel) {
+          kernel.requestExecute({
+            code: `import os; os.environ["_DREMIO_PWD"] = "${esc(creds.password)}"`,
+            silent: true,
+            store_history: false,
+          });
+        }
+      }
 
       app.shell.activateById(panel.id);
     };
