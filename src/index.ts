@@ -200,9 +200,9 @@ const plugin: JupyterFrontEndPlugin<void> = {
         '**Tip:** Drag any table from the Dremio sidebar into a cell ' +
         'to insert a ready-made `SELECT` statement with all column names.\n' +
         '\n' +
-        '📖 [JupySQL documentation](https://jupysql.ploomber.io/en/latest/) ' +
+        '📖 [JupySQL quick-start](https://jupysql.readthedocs.io/en/latest/quick-start.html) ' +
         '&nbsp;·&nbsp; ' +
-        '[`%%sql` magic reference](https://jupysql.ploomber.io/en/latest/api/magic-sql.html)';
+        '[`%%sql` magic reference](https://jupysql.readthedocs.io/en/latest/api/magic-sql.html)';
 
       model.sharedModel.insertCell(0, {
         cell_type: 'markdown',
