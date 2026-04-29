@@ -452,6 +452,98 @@ export async function fetchCatalogSearch(
 }
 
 // ---------------------------------------------------------------------------
+// Tags  — GET/POST /api/v3/catalog/{id}/collaboration/tag
+// ---------------------------------------------------------------------------
+
+export interface TagsContent {
+  tags: string[];
+  version?: string;
+}
+
+// Dremio returns tags as [{name:"..."}, ...] or as plain strings.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normaliseTags(data: any): TagsContent {
+  const raw: unknown[] = Array.isArray(data?.tags) ? data.tags : [];
+  const tags = raw
+    .map(t => (typeof t === 'string' ? t : (t as { name?: string }).name ?? ''))
+    .filter(Boolean);
+  return { tags, version: data?.version };
+}
+
+async function resolveUuidDirect(creds: DremioCredentials, id: string): Promise<string> {
+  if (!id.startsWith('path:')) return id;
+  const segments = id.slice(5).split('/');
+  const encodedPath = segments.map(s => encodeURIComponent(s)).join('/');
+  const detail = await directRequest(`${creds.url}/api/v3/catalog/by-path/${encodedPath}`, {
+    headers: directAuthHeader(creds.token),
+  });
+  return (detail as { id?: string }).id ?? id;
+}
+
+export async function fetchTags(
+  creds: DremioCredentials,
+  id: string
+): Promise<TagsContent> {
+  if (creds.direct) {
+    const resolvedId = await resolveUuidDirect(creds, id);
+    const resp = await fetch(
+      `${creds.url}/api/v3/catalog/${encodeURIComponent(resolvedId)}/collaboration/tag`,
+      { headers: directAuthHeader(creds.token) }
+    );
+    if (resp.status === 404) return { tags: [] };
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`${resp.status}: ${text}`);
+    }
+    return normaliseTags(await resp.json());
+  }
+  const settings = ServerConnection.makeSettings();
+  const fullUrl = URLExt.join(settings.baseUrl, `dremio/tags/${encodeURIComponent(id)}`);
+  const response = await ServerConnection.makeRequest(
+    fullUrl,
+    { method: 'GET', headers: proxyHeaders(creds) },
+    settings
+  );
+  if (response.status === 404) return { tags: [] };
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`${response.status}: ${text}`);
+  }
+  return normaliseTags(await response.json());
+}
+
+export async function saveTags(
+  creds: DremioCredentials,
+  id: string,
+  tags: string[],
+  version?: string
+): Promise<TagsContent> {
+  const body: Record<string, unknown> = {
+    tags: tags.map(t => ({ name: t })),
+  };
+  if (version != null) body.version = version;
+
+  if (creds.direct) {
+    const resolvedId = await resolveUuidDirect(creds, id);
+    const data = await directRequest(
+      `${creds.url}/api/v3/catalog/${encodeURIComponent(resolvedId)}/collaboration/tag`,
+      {
+        method: 'POST',
+        headers: { ...directAuthHeader(creds.token), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }
+    );
+    return normaliseTags(data);
+  }
+  const data = await proxyRequest(`dremio/tags/${encodeURIComponent(id)}`, {
+    method: 'POST',
+    headers: proxyHeaders(creds),
+    body: JSON.stringify(body),
+  });
+  return normaliseTags(data);
+}
+
+// ---------------------------------------------------------------------------
 // Utility helpers
 // ---------------------------------------------------------------------------
 

@@ -14,6 +14,7 @@ import {
   itemIcon,
 } from '../api';
 import { ContextMenu } from './ContextMenu';
+import { TagEditor } from './TagEditor';
 
 interface Props {
   item: CatalogItem;
@@ -103,6 +104,7 @@ export function CatalogNode({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [showTagEditor, setShowTagEditor] = useState(false);
 
   const displayName = item.path[item.path.length - 1] ?? item.id;
   const container = isContainer(item);
@@ -247,6 +249,11 @@ export function CatalogNode({
               label: 'Copy path to clipboard',
               onClick: copyPathToClipboard,
             },
+            {
+              icon: '🏷️',
+              label: 'Edit tags',
+              onClick: () => setShowTagEditor(true),
+            },
             ...(file ? [{
               icon: '🗂️',
               label: 'Register as Parquet table',
@@ -262,6 +269,10 @@ export function CatalogNode({
             }] : []),
           ]}
         />
+      )}
+
+      {showTagEditor && (
+        <TagEditor item={item} creds={creds} onClose={() => setShowTagEditor(false)} />
       )}
 
       {error && (

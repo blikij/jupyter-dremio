@@ -900,3 +900,257 @@
   border-top: 1px solid var(--jp-border-color1, #d0d0d0);
   margin: 1.5em 0;
 }
+
+/* ── Tag editor modal ─────────────────────────────────────────────────────── */
+
+.dremio-tag-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10100;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dremio-tag-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 80px);
+  background: var(--jp-layout-color1, #fff);
+  border: 1px solid var(--jp-border-color1, #d0d0d0);
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+  font-family: var(--jp-ui-font-family, sans-serif);
+  font-size: var(--jp-ui-font-size1, 13px);
+  color: var(--jp-ui-font-color1, #333);
+  overflow: hidden;
+}
+
+.dremio-tag-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--jp-border-color1, #d0d0d0);
+  background: var(--jp-layout-color2, #f5f5f5);
+  flex-shrink: 0;
+}
+
+.dremio-tag-title {
+  font-weight: 600;
+  font-size: 1.05em;
+  color: var(--jp-ui-font-color0, #111);
+}
+
+.dremio-tag-subtitle {
+  flex: 1;
+  font-size: 0.88em;
+  color: var(--jp-ui-font-color2, #888);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dremio-tag-close {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: var(--jp-ui-font-color2, #888);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.dremio-tag-close:hover {
+  background: var(--jp-layout-color3, #e0e0e0);
+  color: var(--jp-ui-font-color0, #111);
+}
+
+.dremio-tag-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dremio-tag-section-label {
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--jp-ui-font-color2, #888);
+  margin-bottom: 2px;
+}
+
+.dremio-tag-loading,
+.dremio-tag-error {
+  font-size: 0.9em;
+  padding: 6px 0;
+}
+
+.dremio-tag-error {
+  color: var(--jp-error-color1, #e53935);
+}
+
+/* Suggested tag buttons */
+.dremio-tag-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dremio-tag-suggestion {
+  padding: 3px 10px;
+  border: 1px solid var(--jp-border-color1, #ccc);
+  border-radius: 12px;
+  background: var(--jp-layout-color2, #f5f5f5);
+  color: var(--jp-ui-font-color1, #333);
+  font-size: 0.88em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+
+.dremio-tag-suggestion:hover {
+  background: var(--jp-layout-color3, #e0e0e0);
+}
+
+.dremio-tag-suggestion--active {
+  background: var(--jp-brand-color1, #1976d2);
+  border-color: var(--jp-brand-color1, #1976d2);
+  color: #fff;
+}
+
+.dremio-tag-suggestion--active:hover {
+  background: var(--jp-brand-color0, #1565c0);
+  border-color: var(--jp-brand-color0, #1565c0);
+}
+
+/* Tag chips + input area */
+.dremio-tag-input-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  min-height: 38px;
+  padding: 5px 8px;
+  border: 1px solid var(--jp-border-color1, #d0d0d0);
+  border-radius: 4px;
+  background: var(--jp-layout-color0, #fff);
+  cursor: text;
+}
+
+.dremio-tag-input-area:focus-within {
+  border-color: var(--jp-brand-color1, #1976d2);
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.12);
+}
+
+.dremio-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px 2px 9px;
+  border-radius: 12px;
+  background: var(--jp-brand-color3, #bbdefb);
+  color: var(--jp-ui-font-color0, #111);
+  font-size: 0.88em;
+  white-space: nowrap;
+}
+
+.dremio-tag-chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--jp-ui-font-color1, #333);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.7;
+}
+
+.dremio-tag-chip-remove:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.dremio-tag-text-input {
+  flex: 1;
+  min-width: 120px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--jp-ui-font-color0, #111);
+  font-size: var(--jp-ui-font-size1, 13px);
+  font-family: inherit;
+  padding: 2px 0;
+}
+
+.dremio-tag-hint {
+  font-size: 0.8em;
+  color: var(--jp-ui-font-color2, #999);
+  font-style: italic;
+}
+
+/* Footer buttons */
+.dremio-tag-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--jp-border-color1, #d0d0d0);
+  background: var(--jp-layout-color2, #f5f5f5);
+  flex-shrink: 0;
+}
+
+.dremio-tag-btn {
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-size: var(--jp-ui-font-size1, 13px);
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.dremio-tag-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dremio-tag-btn--primary {
+  background: var(--jp-brand-color1, #1976d2);
+  color: #fff;
+  border-color: var(--jp-brand-color1, #1976d2);
+}
+
+.dremio-tag-btn--primary:hover:not(:disabled) {
+  background: var(--jp-brand-color0, #1565c0);
+}
+
+.dremio-tag-btn--secondary {
+  background: var(--jp-layout-color1, #fff);
+  color: var(--jp-ui-font-color1, #333);
+  border-color: var(--jp-border-color1, #ccc);
+}
+
+.dremio-tag-btn--secondary:hover:not(:disabled) {
+  background: var(--jp-layout-color3, #e8e8e8);
+}

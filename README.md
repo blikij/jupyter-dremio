@@ -22,6 +22,7 @@ A JupyterLab 4.x sidebar extension for browsing and querying the Dremio catalog.
 ### Context menu (right-click)
 - **Open wiki** — renders the Dremio wiki for that item as Markdown in a main-area tab
 - **Copy path to clipboard** — copies the full SQL-quoted path
+- **Edit tags** — opens a tag editor with current Dremio collaboration tags as removable chips, one-click suggested tags, and a free-text input for custom tags
 - **Create folder** — creates a sub-folder inside the selected space or folder
 - **Delete table / view / folder** — with confirmation dialog
 - **Register as Parquet table** — promotes a raw FILE item (e.g. an S3 Parquet file) to a physical dataset
@@ -41,10 +42,10 @@ A JupyterLab 4.x sidebar extension for browsing and querying the Dremio catalog.
 
 ## Install
 
-Download `jupyter_dremio-0.1.15-py3-none-any.whl` from the [latest release](https://github.com/blikij/jupyter-dremio/releases/latest), then run:
+Download `jupyter_dremio-0.1.16-py3-none-any.whl` from the [latest release](https://github.com/blikij/jupyter-dremio/releases/latest), then run:
 
 ```bash
-pip install jupyter_dremio-0.1.15-py3-none-any.whl
+pip install jupyter_dremio-0.1.16-py3-none-any.whl
 ```
 
 Restart JupyterLab after installation. The Dremio icon appears in the left sidebar.
@@ -63,6 +64,14 @@ Optional:
 - `sqlglot[rs]` — faster SQL parsing used by JupySQL (`pip install sqlglot[rs]`)
 
 ## Changelog
+
+### 0.1.16
+- **Edit tags** — right-click any catalog item to open a tag editor modal.
+  Existing Dremio collaboration tags are shown as removable chips; one-click
+  suggested tags (`public`, `indicator`, `reference`, `viewer`, `restapi`)
+  toggle on/off; type additional tags in the input box (space, comma, or
+  Enter splits them). Changes are saved back to Dremio via
+  `POST /api/v3/catalog/{id}/collaboration/tag`.
 
 ### 0.1.15
 - **Secure notebooks** — username and password are never written into the `.ipynb` file.

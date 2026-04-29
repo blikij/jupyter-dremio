@@ -279,6 +279,58 @@ class FolderHandler(APIHandler):
         self.finish(resp.json())
 
 
+def _resolve_uuid(dremio_url: str, token: str, item_id: str) -> str:
+    """Resolve a path:-prefixed sentinel to a real Dremio UUID."""
+    if item_id.startswith("path:"):
+        segments = item_id[5:].split("/")
+        encoded_path = "/".join(urllib.parse.quote(s, safe="") for s in segments)
+        resp = requests.get(
+            f"{dremio_url}/api/v3/catalog/by-path/{encoded_path}",
+            headers=_auth_header(token),
+            timeout=10,
+        )
+        if resp.ok:
+            return resp.json().get("id", item_id)
+    return item_id
+
+
+class TagsHandler(APIHandler):
+    @web.authenticated
+    def get(self, item_id: str):
+        dremio_url = _dremio_url(self)
+        token = _dremio_token(self)
+        resolved = _resolve_uuid(dremio_url, token, item_id)
+        encoded = urllib.parse.quote(resolved, safe="")
+        resp = requests.get(
+            f"{dremio_url}/api/v3/catalog/{encoded}/collaboration/tag",
+            headers=_auth_header(token),
+            timeout=30,
+        )
+        if resp.status_code == 404:
+            self.finish({"tags": []})
+            return
+        if not resp.ok:
+            raise web.HTTPError(resp.status_code, resp.text)
+        self.finish(resp.json())
+
+    @web.authenticated
+    def post(self, item_id: str):
+        dremio_url = _dremio_url(self)
+        token = _dremio_token(self)
+        resolved = _resolve_uuid(dremio_url, token, item_id)
+        body = json.loads(self.request.body)
+        encoded = urllib.parse.quote(resolved, safe="")
+        resp = requests.post(
+            f"{dremio_url}/api/v3/catalog/{encoded}/collaboration/tag",
+            json=body,
+            headers={**_auth_header(token), "Content-Type": "application/json"},
+            timeout=30,
+        )
+        if not resp.ok:
+            raise web.HTTPError(resp.status_code, resp.text)
+        self.finish(resp.json())
+
+
 class WikiHandler(APIHandler):
     @web.authenticated
     def get(self, item_id: str):
@@ -346,6 +398,7 @@ def setup_handlers(web_app):
         (f"{base}/dremio/sso-logout", SsoLogoutHandler),
         (f"{base}/dremio/catalog/folder", FolderHandler),
         (f"{base}/dremio/catalog/search", SearchHandler),
+        (f"{base}/dremio/tags/(.+)", TagsHandler),
         (f"{base}/dremio/wiki/(.+)", WikiHandler),
         (f"{base}/dremio/jobs", JobsHandler),
         (f"{base}/dremio/catalog", RootCatalogHandler),
